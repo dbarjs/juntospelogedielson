@@ -1,0 +1,3 @@
+# Bank Account secrets live encrypted in the database
+
+Bank Accounts are registered in the app, so each one's API credentials and client certificate are stored in Turso, encrypted with a key that exists only in Vercel's environment variables, instead of being kept as Vercel env vars themselves (the obvious alternative, which turns every account change into an env edit plus a redeploy). This lets the Operator add a Bank Account or swap a renewed certificate without a redeploy, at the cost of a larger attack surface: anyone holding both the database token and the encryption key can read every Bank Account's secrets, and the app has to own encryption and key rotation.
