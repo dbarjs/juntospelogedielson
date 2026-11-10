@@ -35,7 +35,7 @@ export interface Charge {
 }
 
 export const PROTOTYPE_OPERATOR_VARIANTS = [
-  { key: 'A', name: 'Painel' },
+  { key: 'A', name: 'Painel (escolhido)' },
   { key: 'B', name: 'Extrato' },
   { key: 'C', name: 'Caixa' }
 ]
@@ -378,6 +378,24 @@ export function inPeriod(d: Date, period: Period, now = Date.now()) {
     case 'month': return t >= new Date(new Date(now).getFullYear(), new Date(now).getMonth(), 1).getTime()
     default: return true
   }
+}
+
+export function chargeTimeline(c: Charge, accountName: string) {
+  const t: { at: Date, label: string, icon: string, tone: string }[] = [
+    { at: c.createdAt, label: `Criada em ${accountName}`, icon: 'i-lucide-circle-plus', tone: 'text-muted' }
+  ]
+  if (c.payment) t.push({ at: c.payment.paidAt, label: `Paga · ${fmtMoney(c.payment.amountReceived)} recebidos`, icon: 'i-lucide-circle-check', tone: 'text-success' })
+  if (!c.payment && c.status === 'expired') t.push({ at: c.expiresAt, label: 'Expirou sem pagamento', icon: 'i-lucide-hourglass', tone: 'text-muted' })
+  if (c.status === 'cancelled') t.push({ at: c.expiresAt, label: 'Cancelada pelo banco', icon: 'i-lucide-ban', tone: 'text-error' })
+  if (c.status === 'pending') {
+    t.push({
+      at: c.expiresAt,
+      label: c.expiresAt.getTime() < Date.now() ? 'Venceu; aguardando o banco confirmar' : `Vence ${fmtRelative(c.expiresAt)}`,
+      icon: 'i-lucide-clock',
+      tone: 'text-warning'
+    })
+  }
+  return t.sort((a, b) => a.at.getTime() - b.at.getTime())
 }
 
 export function totalReceived(charges: Charge[]) {

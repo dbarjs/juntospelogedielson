@@ -10,6 +10,7 @@ const UBadge = resolveComponent('UBadge')
 const UButton = resolveComponent('UButton')
 const UDropdownMenu = resolveComponent('UDropdownMenu')
 
+const desktopOnly = { class: { th: 'hidden sm:table-cell', td: 'hidden sm:table-cell' } }
 const columns: TableColumn<BankAccount>[] = [
   {
     accessorKey: 'name',
@@ -20,7 +21,7 @@ const columns: TableColumn<BankAccount>[] = [
     ])
   },
   { id: 'provider', header: 'Banco', cell: ({ row }) => PROVIDERS[row.original.provider].label },
-  { accessorKey: 'pixKey', header: 'Chave Pix', cell: ({ row }) => h('code', { class: 'font-mono text-xs' }, row.original.pixKey) },
+  { accessorKey: 'pixKey', header: 'Chave Pix', meta: desktopOnly, cell: ({ row }) => h('code', { class: 'font-mono text-xs' }, row.original.pixKey) },
   {
     id: 'cert',
     header: 'Certificado vence',
@@ -32,7 +33,7 @@ const columns: TableColumn<BankAccount>[] = [
       ])
     }
   },
-  { id: 'pending', header: 'Pendentes', cell: ({ row }) => String(pendingCount(row.original.id)) },
+  { id: 'pending', header: 'Pendentes', meta: desktopOnly, cell: ({ row }) => String(pendingCount(row.original.id)) },
   {
     id: 'actions',
     cell: ({ row }) => h('div', { class: 'text-right' }, h(UDropdownMenu, { items: actions(row.original), content: { align: 'end' } }, () =>

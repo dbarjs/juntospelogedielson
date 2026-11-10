@@ -1,4 +1,5 @@
-<!-- PROTOTYPE — throwaway. Variant A Charges: stat tiles, filter toolbar, numbered-page table, slideover detail. -->
+<!-- PROTOTYPE — throwaway. Variant A Charges (the chosen one): stat tiles, filter toolbar with txid / end-to-end id
+     search, numbered-page table (fewer columns on phones), slideover detail with a timeline. -->
 <script setup lang="ts">
 import type { TableColumn } from '@nuxt/ui'
 import type { Charge, ChargeStatus, Period } from '~/composables/usePrototypeOperator'
@@ -8,9 +9,10 @@ const { state, allAccounts, accountById, staleAccounts } = usePrototypeOperator(
 const status = ref<'all' | ChargeStatus>('all')
 const accountId = ref<string>('all')
 const period = ref<Period>('30d')
+const query = ref('')
 const page = ref(1)
 const PAGE_SIZE = 20
-watch([status, accountId, period], () => (page.value = 1))
+watch([status, accountId, period, query], () => (page.value = 1))
 
 const statusItems = [
   { label: 'Todos os status', value: 'all' },
@@ -21,10 +23,16 @@ const accountItems = computed(() => [
   ...allAccounts.value.map(a => ({ label: a.removedAt ? `${a.name} (removida)` : a.name, value: a.id }))
 ])
 
+const searching = computed(() => query.value.trim().length > 0)
 const inScope = computed(() => state.charges.filter(c =>
   (accountId.value === 'all' || c.bankAccountId === accountId.value) && inPeriod(c.createdAt, period.value)
 ))
-const filtered = computed(() => inScope.value.filter(c => status.value === 'all' || c.status === status.value))
+const filtered = computed(() => {
+  const q = query.value.trim()
+  // A search ignores the filters and looks through all history.
+  if (q) return state.charges.filter(c => c.txid.includes(q) || c.payment?.endToEndId.includes(q))
+  return inScope.value.filter(c => status.value === 'all' || c.status === status.value)
+})
 const pageRows = computed(() => filtered.value.slice((page.value - 1) * PAGE_SIZE, page.value * PAGE_SIZE))
 
 const tiles = computed(() => {
@@ -37,14 +45,15 @@ const tiles = computed(() => {
   ]
 })
 
-const UBadgeC = resolveComponent('PrototypeOperatorStatusBadge')
+const desktopOnly = { class: { th: 'hidden sm:table-cell', td: 'hidden sm:table-cell' } }
+const StatusBadge = resolveComponent('PrototypeOperatorStatusBadge')
 const columns: TableColumn<Charge>[] = [
   { accessorKey: 'createdAt', header: 'Criada em', cell: ({ row }) => fmtDateTime(row.original.createdAt) },
   { accessorKey: 'amount', header: () => h('div', { class: 'text-right' }, 'Valor'), cell: ({ row }) => h('div', { class: 'text-right font-medium tabular-nums' }, fmtMoney(row.original.amount)) },
-  { accessorKey: 'status', header: 'Status', cell: ({ row }) => h(UBadgeC, { charge: row.original, size: 'sm' }) },
-  { id: 'account', header: 'Conta', cell: ({ row }) => accountById(row.original.bankAccountId).name },
-  { id: 'paidAt', header: 'Pago em', cell: ({ row }) => row.original.payment ? fmtDateTime(row.original.payment.paidAt) : '—' },
-  { accessorKey: 'txid', header: 'txid', cell: ({ row }) => h('code', { class: 'font-mono text-xs text-muted' }, shortId(row.original.txid)) }
+  { accessorKey: 'status', header: 'Status', cell: ({ row }) => h(StatusBadge, { charge: row.original, size: 'sm' }) },
+  { id: 'account', header: 'Conta', meta: desktopOnly, cell: ({ row }) => accountById(row.original.bankAccountId).name },
+  { id: 'paidAt', header: 'Pago em', meta: desktopOnly, cell: ({ row }) => row.original.payment ? fmtDateTime(row.original.payment.paidAt) : '—' },
+  { accessorKey: 'txid', header: 'txid', meta: desktopOnly, cell: ({ row }) => h('code', { class: 'font-mono text-xs text-muted' }, shortId(row.original.txid)) }
 ]
 
 const selected = ref<Charge | null>(null)
@@ -85,22 +94,30 @@ async function refresh() {
       <PrototypeOperatorAWarnings />
       <UDashboardToolbar>
         <template #left>
-          <div class="flex flex-wrap gap-2">
-            <USelect
-              v-model="period"
-              :items="PERIODS"
-              class="w-40"
+          <div class="flex w-full flex-wrap gap-2 py-1">
+            <UInput
+              v-model="query"
+              icon="i-lucide-search"
+              placeholder="Buscar txid ou end-to-end id"
+              class="w-full sm:w-72"
             />
-            <USelect
-              v-model="accountId"
-              :items="accountItems"
-              class="w-48"
-            />
-            <USelect
-              v-model="status"
-              :items="statusItems"
-              class="w-40"
-            />
+            <template v-if="!searching">
+              <USelect
+                v-model="period"
+                :items="PERIODS"
+                class="w-[calc(50%-0.25rem)] sm:w-40"
+              />
+              <USelect
+                v-model="accountId"
+                :items="accountItems"
+                class="w-[calc(50%-0.25rem)] sm:w-44"
+              />
+              <USelect
+                v-model="status"
+                :items="statusItems"
+                class="w-full sm:w-40"
+              />
+            </template>
           </div>
         </template>
       </UDashboardToolbar>
@@ -118,7 +135,10 @@ async function refresh() {
         :actions="[{ label: 'Tentar de novo', color: 'warning', variant: 'soft', onClick: refresh }]"
       />
 
-      <div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div
+        v-if="!searching"
+        class="grid grid-cols-2 gap-3 lg:grid-cols-4"
+      >
         <UCard
           v-for="t in tiles"
           :key="t.label"
@@ -139,6 +159,12 @@ async function refresh() {
           </p>
         </UCard>
       </div>
+      <p
+        v-else
+        class="text-sm text-muted"
+      >
+        {{ filtered.length }} resultado(s) em todo o histórico, sem filtros.
+      </p>
 
       <UTable
         :data="pageRows"
@@ -156,13 +182,13 @@ async function refresh() {
               class="size-8 text-dimmed"
             />
             <p class="mt-2 text-sm text-muted">
-              Nenhuma cobrança neste filtro.
+              {{ searching ? 'Nenhuma cobrança com esse txid ou end-to-end id.' : 'Nenhuma cobrança neste filtro.' }}
             </p>
           </div>
         </template>
       </UTable>
 
-      <div class="flex flex-wrap items-center justify-between gap-2">
+      <div class="flex flex-wrap items-center justify-between gap-2 pb-16 sm:pb-0">
         <p class="text-sm text-muted">
           {{ filtered.length ? `${(page - 1) * PAGE_SIZE + 1}–${Math.min(page * PAGE_SIZE, filtered.length)} de ${filtered.length}` : '0 cobranças' }}
         </p>
@@ -170,6 +196,7 @@ async function refresh() {
           v-model:page="page"
           :total="filtered.length"
           :items-per-page="PAGE_SIZE"
+          :sibling-count="0"
         />
       </div>
     </template>
@@ -178,90 +205,67 @@ async function refresh() {
   <USlideover
     v-model:open="open"
     :title="selected ? fmtMoney(selected.amount) : ''"
-    :description="selected ? `Criada ${fmtFull(selected.createdAt)}` : ''"
+    :description="selected ? accountById(selected.bankAccountId).name : ''"
   >
     <template #body>
-      <dl
+      <div
         v-if="selected"
-        class="space-y-4 text-sm"
+        class="space-y-6 text-sm"
       >
-        <div class="flex items-center justify-between">
-          <dt class="text-muted">
-            Status
-          </dt>
-          <dd><PrototypeOperatorStatusBadge :charge="selected" /></dd>
+        <div class="flex flex-wrap items-center gap-2">
+          <PrototypeOperatorStatusBadge :charge="selected" />
+          <UBadge
+            v-if="selected.payment && selected.payment.amountReceived !== selected.amount"
+            color="warning"
+            variant="subtle"
+            :label="`Recebido ${fmtMoney(selected.payment.amountReceived)}: difere da cobrança`"
+          />
         </div>
-        <div>
-          <dt class="text-muted">
-            txid
-          </dt>
-          <dd><PrototypeOperatorCopyable :value="selected.txid" /></dd>
-        </div>
-        <div class="grid grid-cols-2 gap-4">
+
+        <ol class="space-y-4">
+          <li
+            v-for="(t, i) in chargeTimeline(selected, accountById(selected.bankAccountId).name)"
+            :key="i"
+            class="flex gap-3"
+          >
+            <UIcon
+              :name="t.icon"
+              :class="t.tone"
+              class="mt-0.5 size-4 shrink-0"
+            />
+            <div>
+              <p>{{ t.label }}</p>
+              <p class="text-xs text-muted">
+                {{ fmtFull(t.at) }}
+              </p>
+            </div>
+          </li>
+        </ol>
+
+        <dl class="space-y-3">
           <div>
             <dt class="text-muted">
-              Criada
-            </dt><dd>{{ fmtFull(selected.createdAt) }}</dd>
+              txid
+            </dt>
+            <dd><PrototypeOperatorCopyable :value="selected.txid" /></dd>
           </div>
-          <div>
-            <dt class="text-muted">
-              Vence
-            </dt><dd>{{ fmtFull(selected.expiresAt) }}</dd>
-          </div>
-        </div>
-        <div>
-          <dt class="text-muted">
-            Conta bancária
-          </dt>
-          <dd>
-            {{ accountById(selected.bankAccountId).name }} · {{ PROVIDERS[accountById(selected.bankAccountId).provider].label }}
-            <span class="block text-xs text-muted">Chave {{ accountById(selected.bankAccountId).pixKey }}</span>
-          </dd>
-        </div>
-        <USeparator label="Pagamento" />
-        <template v-if="selected.payment">
-          <div class="grid grid-cols-2 gap-4">
-            <div>
-              <dt class="text-muted">
-                Valor recebido
-              </dt>
-              <dd class="font-medium">
-                {{ fmtMoney(selected.payment.amountReceived) }}
-                <UBadge
-                  v-if="selected.payment.amountReceived !== selected.amount"
-                  color="warning"
-                  variant="subtle"
-                  size="sm"
-                  label="difere da cobrança"
-                />
-              </dd>
-            </div>
-            <div>
-              <dt class="text-muted">
-                Pago em
-              </dt><dd>{{ fmtFull(selected.payment.paidAt) }}</dd>
-            </div>
-          </div>
-          <div>
+          <div v-if="selected.payment">
             <dt class="text-muted">
               End-to-end id
             </dt>
             <dd><PrototypeOperatorCopyable :value="selected.payment.endToEndId" /></dd>
           </div>
-          <p
-            v-if="selected.payment.paidAt > selected.expiresAt"
-            class="text-xs text-muted"
-          >
-            Paga depois de vencer: um pagamento sempre torna a cobrança Paga.
-          </p>
-        </template>
-        <p
-          v-else
-          class="text-muted"
-        >
-          Nenhum pagamento.
-        </p>
-      </dl>
+          <div>
+            <dt class="text-muted">
+              Conta bancária
+            </dt>
+            <dd>
+              {{ accountById(selected.bankAccountId).name }} · {{ PROVIDERS[accountById(selected.bankAccountId).provider].label }}
+              <span class="block text-xs text-muted">Chave {{ accountById(selected.bankAccountId).pixKey }}</span>
+            </dd>
+          </div>
+        </dl>
+      </div>
     </template>
   </USlideover>
 </template>
