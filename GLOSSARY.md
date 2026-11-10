@@ -60,6 +60,10 @@ _Avoid_: PSP, gateway, bank integration
 The Bank Account that new Charges are created on. Exactly one Bank Account is the Default Account at a time.
 _Avoid_: Main account, primary account
 
+**Probe Charge**:
+A _cobrança_ created on a Bank Account only to check its credentials and Pix Key, for R$ 1,00 and 60 seconds. It is never shown to anyone and is not one of the app's Charges.
+_Avoid_: Test charge, verification charge
+
 ### People
 
 **Payer**:
