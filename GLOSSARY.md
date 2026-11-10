@@ -45,8 +45,12 @@ _Avoid_: Removed, deleted
 ### Receiving money
 
 **Bank Account**:
-An account at a Provider that receives Payments, registered with what is needed to create Charges on it.
+An account at a Provider that receives Payments on one Pix Key, registered with the credentials needed to create Charges on it. A removed Bank Account never creates Charges again, but its Charges still name it.
 _Avoid_: Wallet, receiver, integration
+
+**Pix Key**:
+The key (CPF/CNPJ, e-mail, phone or random) that a Bank Account's Charges are created on. Each Bank Account has exactly one, and it never changes.
+_Avoid_: Chave, key, address
 
 **Provider**:
 The bank whose PIX API creates and tracks a Bank Account's Charges: Efí Bank or Inter (Inter Empresas).
