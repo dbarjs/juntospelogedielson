@@ -1,4 +1,10 @@
 <script setup>
+import { pt_br } from '@nuxt/ui/locale'
+
+// PROTOTYPE — throwaway: prototype routes bring their own shell.
+const route = useRoute()
+const isPrototype = computed(() => route.path.startsWith('/prototype'))
+
 useHead({
   meta: [
     { name: 'viewport', content: 'width=device-width, initial-scale=1' }
@@ -25,7 +31,13 @@ useSeoMeta({
 </script>
 
 <template>
-  <UApp>
+  <UApp
+    v-if="isPrototype"
+    :locale="pt_br"
+  >
+    <NuxtPage />
+  </UApp>
+  <UApp v-else>
     <UHeader>
       <template #left>
         <NuxtLink

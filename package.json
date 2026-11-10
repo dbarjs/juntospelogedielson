@@ -5,6 +5,7 @@
   "scripts": {
     "build": "nuxt build",
     "dev": "nuxt dev",
+    "prototype": "echo '\\n  PROTOTYPE: open http://localhost:3000/prototype/operator/charges\\n' && nuxt dev --host",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
     "lint": "eslint .",
