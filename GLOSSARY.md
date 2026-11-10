@@ -7,16 +7,40 @@ A public PIX donation page for the "Juntos pelo Gedielson" campaign. A Payer ent
 ### Money in
 
 **Charge**:
-A request for one specific amount, created on one Bank Account and shown to the Payer as a QR code and its Copia e Cola (PIX's _cobrança_). It is Pending until it is Paid or Expired.
+A request for one specific amount, created on one Bank Account, to which it belongs for good, and shown to the Payer as a QR code and its Copia e Cola (PIX's _cobrança_). It is Pending until it is Paid, Expired or Cancelled.
 _Avoid_: Transaction, order, invoice, donation
 
+**txid**:
+The identifier we give a Charge when creating it; the Provider and the Operator's banking app show it too.
+_Avoid_: Charge id, transaction id
+
 **Payment**:
-The Pix transfer that settles a Charge.
+The Pix transfer that settles a Charge. A Charge has at most one.
 _Avoid_: Transaction, donation, transfer
+
+**End-to-end id**:
+The identifier PIX gives a Payment, shown on the Payer's receipt and the Operator's bank statement.
+_Avoid_: Transaction id, receipt number
 
 **Copia e Cola**:
 The text form of a Charge's QR code, which the Payer pastes into their banking app instead of scanning.
 _Avoid_: Pix code, BR Code, payload
+
+### A Charge's status
+
+**Pending**:
+A Charge that can still be paid: no Payment yet, and its time to be paid hasn't run out.
+
+**Paid**:
+A Charge whose Payment has arrived. It stays Paid for good, whatever it was before.
+
+**Expired**:
+A Charge whose time to be paid ran out with no Payment. A Payment that turns up later still makes it Paid.
+_Avoid_: Overdue, timed out
+
+**Cancelled**:
+A Charge its Provider removed before it was paid.
+_Avoid_: Removed, deleted
 
 ### Receiving money
 

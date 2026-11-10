@@ -1,0 +1,3 @@
+# Payer details from Providers are discarded
+
+We never ask who Payers are, and the system doesn't learn it from the Providers either. Inter adds the Payer's name and a partly masked CPF to its webhooks, Efí can add the same (`gnExtras.pagador`, which stays switched off), and either may pass on a message the Payer typed (`infoPagador`). The app sends no payer fields when it creates a Charge (no `devedor`, no `solicitacaoPagador`), and it stores and logs none of what comes back: a Payment keeps only its end-to-end id, the amount received and the time, and raw Provider payloads are not kept. This gives up thanking donors by name or showing their messages, in exchange for holding no personal data about Payers; details thrown away now can't be recovered if that ever changes.
