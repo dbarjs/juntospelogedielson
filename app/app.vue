@@ -1,4 +1,8 @@
 <script setup>
+// PROTOTYPE: /prototype/* routes render without the starter chrome.
+const route = useRoute()
+const isPrototype = computed(() => route.path.startsWith('/prototype'))
+
 useHead({
   meta: [
     { name: 'viewport', content: 'width=device-width, initial-scale=1' }
@@ -26,55 +30,59 @@ useSeoMeta({
 
 <template>
   <UApp>
-    <UHeader>
-      <template #left>
-        <NuxtLink
-          to="/"
-          class="focus-visible:outline-3 outline-primary/25 rounded-md p-1 -ms-1"
-        >
-          <AppLogo class="w-auto h-6 shrink-0" />
-        </NuxtLink>
+    <NuxtPage v-if="isPrototype" />
 
-        <TemplateMenu />
-      </template>
+    <template v-else>
+      <UHeader>
+        <template #left>
+          <NuxtLink
+            to="/"
+            class="focus-visible:outline-3 outline-primary/25 rounded-md p-1 -ms-1"
+          >
+            <AppLogo class="w-auto h-6 shrink-0" />
+          </NuxtLink>
 
-      <template #right>
-        <UColorModeButton />
+          <TemplateMenu />
+        </template>
 
-        <UButton
-          to="https://github.com/nuxt-ui-templates/starter"
-          target="_blank"
-          icon="i-simple-icons-github"
-          aria-label="GitHub"
-          color="neutral"
-          variant="ghost"
-        />
-      </template>
-    </UHeader>
+        <template #right>
+          <UColorModeButton />
 
-    <UMain>
-      <NuxtPage />
-    </UMain>
+          <UButton
+            to="https://github.com/nuxt-ui-templates/starter"
+            target="_blank"
+            icon="i-simple-icons-github"
+            aria-label="GitHub"
+            color="neutral"
+            variant="ghost"
+          />
+        </template>
+      </UHeader>
 
-    <USeparator icon="i-simple-icons-nuxtdotjs" />
+      <UMain>
+        <NuxtPage />
+      </UMain>
 
-    <UFooter>
-      <template #left>
-        <p class="text-sm text-muted">
-          Built with Nuxt UI • © {{ new Date().getFullYear() }}
-        </p>
-      </template>
+      <USeparator icon="i-simple-icons-nuxtdotjs" />
 
-      <template #right>
-        <UButton
-          to="https://github.com/nuxt-ui-templates/starter"
-          target="_blank"
-          icon="i-simple-icons-github"
-          aria-label="GitHub"
-          color="neutral"
-          variant="ghost"
-        />
-      </template>
-    </UFooter>
+      <UFooter>
+        <template #left>
+          <p class="text-sm text-muted">
+            Built with Nuxt UI • © {{ new Date().getFullYear() }}
+          </p>
+        </template>
+
+        <template #right>
+          <UButton
+            to="https://github.com/nuxt-ui-templates/starter"
+            target="_blank"
+            icon="i-simple-icons-github"
+            aria-label="GitHub"
+            color="neutral"
+            variant="ghost"
+          />
+        </template>
+      </UFooter>
+    </template>
   </UApp>
 </template>

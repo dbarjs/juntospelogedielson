@@ -5,14 +5,17 @@ export default defineNuxtConfig({
     '@nuxt/ui'
   ],
 
+  // PROTOTYPE: off on this branch, so its floating button doesn't cover the variant switcher.
   devtools: {
-    enabled: true
+    enabled: false
   },
 
   css: ['~/assets/css/main.css'],
 
   routeRules: {
-    '/': { prerender: true }
+    '/': { prerender: true },
+    // PROTOTYPE: the payment page prototype runs client-only on a fake Provider.
+    '/prototype/**': { ssr: false }
   },
 
   compatibilityDate: '2026-06-30',
